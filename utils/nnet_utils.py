@@ -141,7 +141,7 @@ def load_nnet(model_file: str, nnet: nn.Module, device: torch.device = None) -> 
     # remove module prefix
     new_state_dict = OrderedDict()
     for k, v in state_dict.items():
-        k = re.sub('^module\.', '', k)
+        k = re.sub(r'^module\.', '', k)
         new_state_dict[k] = v
 
     # set state dict
@@ -269,7 +269,7 @@ def heuristic_fn_runner(heuristic_fn_input_queue: Queue, heuristic_fn_output_que
             break
 
         if all_zeros:
-            heuristics = np.zeros(states_nnet[0].shape[0], dtype=np.float)
+            heuristics = np.zeros(states_nnet[0].shape[0], dtype=np.float64)
         else:
             heuristics = heuristic_fn(states_nnet, is_nnet_format=True)
 

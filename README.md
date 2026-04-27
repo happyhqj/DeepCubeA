@@ -14,8 +14,8 @@ You should be able to install these packages with pip or conda
 
 Python version used: 3.7.2
 
-IMPORTANT! Before running anything, please execute: `source setup.sh` in the DeepCubeA directory to add the current 
-directory to your python path.
+The main scripts can now be run directly with `python3` from the DeepCubeA directory. If you prefer to use `python`,
+execute `source setup.sh` first and make sure your environment provides a `python` executable.
 
 # Training and A* Search
 `train.sh` contains the commands to trian the cost-to-go function as well as using it with A* search.
@@ -34,13 +34,13 @@ There are pre-computed results of A* search in the `results/` directory.
 
 ### Commands to train DeepCubeA to solve the 15-puzzle.
 ###### Train cost-to-go function
-`python ctg_approx/avi.py --env puzzle15 --states_per_update 50000000 --batch_size 10000 --nnet_name puzzle15 --max_itrs 1000000 --loss_thresh 0.1 --back_max 500 --num_update_procs 30`
+`python3 ctg_approx/avi.py --env puzzle15 --states_per_update 50000000 --batch_size 10000 --nnet_name puzzle15 --max_itrs 1000000 --loss_thresh 0.1 --back_max 500 --num_update_procs 30`
 
 ###### Solve with A* search, use --verbose for more information
-`python search_methods/astar.py --states data/puzzle15/test/data_0.pkl --model saved_models/puzzle15/current/ --env puzzle15 --weight 0.8 --batch_size 20000 --results_dir results/puzzle15/ --language cpp --nnet_batch_size 10000`
+`python3 search_methods/astar.py --states data/puzzle15/test/data_0.pkl --model saved_models/puzzle15/current/ --env puzzle15 --weight 0.8 --batch_size 20000 --results_dir results/puzzle15/ --language cpp --nnet_batch_size 10000`
 
 ###### Compare to shortest path
-`python scripts/compare_solutions.py --soln1 data/puzzle15/test/data_0.pkl --soln2 results/puzzle15/results.pkl`
+`python3 scripts/compare_solutions.py --soln1 data/puzzle15/test/data_0.pkl --soln2 results/puzzle15/results.pkl`
 
 ### Improving Results
 During approximate value iteration (AVI), one can get better results by increasing the batch size (`--batch_size`) and number of states per update (`--states_per_update`).
@@ -100,4 +100,3 @@ To cite this project, please use
   publisher={Nature Publishing Group UK London}
 }
 ```
-

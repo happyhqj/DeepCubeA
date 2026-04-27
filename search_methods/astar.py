@@ -1,3 +1,10 @@
+import os
+import sys
+
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 from typing import List, Tuple, Dict, Callable, Optional, Any
 from environments.environment_abstract import Environment, State
 import numpy as np
@@ -9,8 +16,6 @@ import torch
 from utils import env_utils, nnet_utils, search_utils, misc_utils, data_utils
 import pickle
 import time
-import sys
-import os
 import socket
 from torch.multiprocessing import Process
 
@@ -344,7 +349,8 @@ def main():
     # parse arguments
     parser: ArgumentParser = ArgumentParser()
     parser.add_argument('--states', type=str, required=True, help="File containing states to solve")
-    parser.add_argument('--model_dir', type=str, required=True, help="Directory of nnet model")
+    parser.add_argument('--model_dir', '--model', dest='model_dir', type=str, required=True,
+                        help="Directory of nnet model")
     parser.add_argument('--env', type=str, required=True, help="Environment: cube3, 15-puzzle, 24-puzzle")
     parser.add_argument('--batch_size', type=int, default=1, help="Batch size for BWAS")
     parser.add_argument('--weight', type=float, default=1.0, help="Weight of path cost")
@@ -486,7 +492,8 @@ def bwas_cpp(args, env: Environment, states: List[State], results_file: str):
         raise ValueError("Unknown c++ environment: %s" % args.env)
 
     # start heuristic proc
-    num_parallel: int = len(os.environ['CUDA_VISIBLE_DEVICES'].split(","))
+    cuda_visible_devices = os.environ.get('CUDA_VISIBLE_DEVICES')
+    num_parallel: int = len(cuda_visible_devices.split(",")) if cuda_visible_devices else 1
     device, devices, on_gpu = nnet_utils.get_device()
     heur_fn_i_q, heur_fn_o_qs, heur_procs = nnet_utils.start_heur_fn_runners(num_parallel, args.model_dir, device,
                                                                              on_gpu, env, all_zeros=False,
@@ -525,11 +532,11 @@ def bwas_cpp(args, env: Environment, states: List[State], results_file: str):
             if args.verbose:
                 sys.stdout.write("%s\n" % stdout_line)
                 sys.stdout.flush()
+        stderr = popen.stderr.read()
+        return_code = popen.wait()
 
-        moves = [int(x) for x in lines[-5].split(" ")[:-1]]
+        moves, num_nodes_gen_idx, solve_time = parse_cpp_output(lines, stderr, return_code)
         soln = [x for x in moves][::-1]
-        num_nodes_gen_idx = int(lines[-3])
-        solve_time = float(lines[-1])
 
         # record solution information
         path: List[State] = [state]
@@ -566,6 +573,26 @@ def bwas_cpp(args, env: Environment, states: List[State], results_file: str):
     nnet_utils.stop_heuristic_fn_runners(heur_procs, heur_fn_i_q)
 
     return solns, paths, times, num_nodes_gen
+
+
+def parse_cpp_output(lines: List[str], stderr: str, return_code: int) -> Tuple[List[int], int, float]:
+    try:
+        moves_idx = lines.index("Move nums:") + 1
+        nodes_idx = lines.index("Nodes Generated:") + 1
+        time_idx = lines.index("Total time:") + 1
+
+        moves = [int(x) for x in lines[moves_idx].split()]
+        num_nodes_gen = int(lines[nodes_idx])
+        solve_time = float(lines[time_idx])
+    except (ValueError, IndexError) as err:
+        output_tail = "\n".join(lines[-20:])
+        raise RuntimeError("Could not parse C++ A* output. Return code: %s\nSTDOUT:\n%s\nSTDERR:\n%s" %
+                           (return_code, output_tail, stderr)) from err
+
+    if return_code != 0:
+        raise RuntimeError("C++ A* failed with return code %s\nSTDERR:\n%s" % (return_code, stderr))
+
+    return moves, num_nodes_gen, solve_time
 
 
 def cpp_listener(sock, args, env: Environment, state_dim: int, heur_fn_i_q, heur_fn_o_qs):

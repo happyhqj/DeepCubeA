@@ -21,13 +21,13 @@
 #include <iterator>
 #include <algorithm>
 #include <chrono>
+#include <functional>
 #include <thread>         // std::thread
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/un.h>
-#include <boost/functional/hash.hpp>
 
 
 #include "environments.h"
@@ -104,7 +104,11 @@ struct NodePointerEq {
 struct Hash {
 	size_t operator() (const Node *node) const {
 		std::vector<uint8_t> state = node->env->getState();
-		size_t hashVal = boost::hash_range(state.begin(), state.end());
+		size_t hashVal = 0;
+		std::hash<uint8_t> hasher;
+		for (std::vector<uint8_t>::const_iterator itr = state.begin(); itr != state.end(); ++itr) {
+			hashVal ^= hasher(*itr) + 0x9e3779b9 + (hashVal << 6) + (hashVal >> 2);
+		}
 
 		return(hashVal);
 	}
@@ -141,14 +145,18 @@ void parallelWeightedAStar(const Environment *env, float depthPenalty, int numPa
 	std::priority_queue<Node*,std::vector<Node*>,compareNodeCost> open;
 	std::unordered_set<Node*,Hash,NodePointerEq> closed;
 
-	int sockfd, servlen;
+	int sockfd;
+	socklen_t servlen;
 	struct sockaddr_un serv_addr;
 
     // Initalize socket
     bzero((char *)&serv_addr,sizeof(serv_addr));
     serv_addr.sun_family = AF_UNIX;
+#ifdef __APPLE__
+    serv_addr.sun_len = sizeof(serv_addr);
+#endif
     strcpy(serv_addr.sun_path, socketName.c_str());
-    servlen = (int) strlen(serv_addr.sun_path) + (int) sizeof(serv_addr.sun_family);
+    servlen = sizeof(serv_addr);
 
     if ((sockfd = socket(AF_UNIX, SOCK_STREAM,0)) < 0)
         error("Creating socket");

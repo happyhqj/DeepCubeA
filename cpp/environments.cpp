@@ -12,10 +12,10 @@ uint8_t **getSwapZeroIdxs(int dim) {
     for (int i=0; i<dim; i++) {
       for (int j=0; j<dim; j++) {
         int zIdx = i*dim + j;
-        bool isEligible;
+        bool isEligible = false;
 
-        int swap_i;
-        int swap_j;
+        int swap_i = i;
+        int swap_j = j;
         if (move == 0) { // U
             isEligible = i < (dim-1);
             swap_i = i+1;
@@ -368,4 +368,3 @@ bool Cube4::isSolved() const {
 int Cube4::getNumActions() const {
 	return(this->numActions);
 }
-

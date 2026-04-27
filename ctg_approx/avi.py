@@ -1,3 +1,10 @@
+import os
+import sys
+
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 from utils import data_utils, nnet_utils, env_utils
 from typing import Dict, List, Tuple, Any
 
@@ -7,14 +14,12 @@ from search_methods.gbfs import gbfs_test
 import torch
 
 import torch.nn as nn
-import os
 import pickle
 
 from argparse import ArgumentParser
 import numpy as np
 import time
 
-import sys
 import shutil
 
 

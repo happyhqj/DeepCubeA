@@ -1,9 +1,15 @@
+import os
+import sys
+
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 from typing import List
 from environments.environment_abstract import Environment, State
 from utils import env_utils
 from argparse import ArgumentParser
 import pickle
-import os
 import time
 
 from multiprocessing import Queue, Process

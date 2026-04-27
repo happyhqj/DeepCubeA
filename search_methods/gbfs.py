@@ -1,3 +1,10 @@
+import os
+import sys
+
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 from typing import List, Tuple, Set, Callable, Optional
 from environments.environment_abstract import Environment, State
 import numpy as np
@@ -127,7 +134,7 @@ class GBFS:
 def gbfs_test(num_states: int, back_max: int, env: Environment, heuristic_fn: Callable,
               max_solve_steps: Optional[int] = None):
     # get data
-    back_steps: List[int] = list(np.linspace(0, back_max, 30, dtype=np.int))
+    back_steps: List[int] = list(np.linspace(0, back_max, 30, dtype=np.int64))
     num_states_per_back_step: List[int] = misc_utils.split_evenly(num_states, len(back_steps))
 
     states: List[State] = []

@@ -72,7 +72,7 @@ def update_runner(num_states: int, back_max: int, update_batch_size: int, heur_f
         else:
             raise ValueError("Unknown update method %s" % update_method)
 
-        states_update_nnet: List[np.ndaray] = env.state_to_nnet_input(states_update)
+        states_update_nnet: List[np.ndarray] = env.state_to_nnet_input(states_update)
 
         result_queue.put((states_update_nnet, cost_to_go_update, is_solved))
 
@@ -129,7 +129,7 @@ class Updater:
 
         none_count: int = 0
         result_count: int = 0
-        display_counts: List[int] = list(np.linspace(1, self.num_batches, 10, dtype=np.int))
+        display_counts: List[int] = list(np.linspace(1, self.num_batches, 10, dtype=np.int64))
 
         start_time = time.time()
 
